@@ -1543,9 +1543,9 @@ Telemetry::FlightMode TelemetryImpl::telemetry_flight_mode_from_flight_mode(Flig
     }
 }
 
-void TelemetryImpl::receive_param_cal_gyro(MAVLinkParameters::Result result, int value)
+void TelemetryImpl::receive_param_cal_gyro(MavlinkParameterSender::Result result, int value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for gyro cal failed.";
         return;
     }
@@ -1554,9 +1554,9 @@ void TelemetryImpl::receive_param_cal_gyro(MAVLinkParameters::Result result, int
     set_health_gyrometer_calibration(ok);
 }
 
-void TelemetryImpl::receive_param_cal_accel(MAVLinkParameters::Result result, int value)
+void TelemetryImpl::receive_param_cal_accel(MavlinkParameterSender::Result result, int value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for accel cal failed.";
         return;
     }
@@ -1565,9 +1565,9 @@ void TelemetryImpl::receive_param_cal_accel(MAVLinkParameters::Result result, in
     set_health_accelerometer_calibration(ok);
 }
 
-void TelemetryImpl::receive_param_cal_mag(MAVLinkParameters::Result result, int value)
+void TelemetryImpl::receive_param_cal_mag(MavlinkParameterSender::Result result, int value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for mag cal failed.";
         return;
     }
@@ -1576,9 +1576,10 @@ void TelemetryImpl::receive_param_cal_mag(MAVLinkParameters::Result result, int 
     set_health_magnetometer_calibration(ok);
 }
 
-void TelemetryImpl::receive_param_cal_mag_offset_x(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_mag_offset_x(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for mag offset_x failed.";
         return;
     }
@@ -1590,9 +1591,10 @@ void TelemetryImpl::receive_param_cal_mag_offset_x(MAVLinkParameters::Result res
     }
 }
 
-void TelemetryImpl::receive_param_cal_mag_offset_y(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_mag_offset_y(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for mag offset_y failed.";
         return;
     }
@@ -1604,9 +1606,10 @@ void TelemetryImpl::receive_param_cal_mag_offset_y(MAVLinkParameters::Result res
     }
 }
 
-void TelemetryImpl::receive_param_cal_mag_offset_z(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_mag_offset_z(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for mag offset_z failed.";
         return;
     }
@@ -1618,9 +1621,10 @@ void TelemetryImpl::receive_param_cal_mag_offset_z(MAVLinkParameters::Result res
     }
 }
 
-void TelemetryImpl::receive_param_cal_accel_offset_x(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_accel_offset_x(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for accel offset_x failed.";
         return;
     }
@@ -1632,9 +1636,10 @@ void TelemetryImpl::receive_param_cal_accel_offset_x(MAVLinkParameters::Result r
     }
 }
 
-void TelemetryImpl::receive_param_cal_accel_offset_y(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_accel_offset_y(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for accel offset_y failed.";
         return;
     }
@@ -1646,9 +1651,10 @@ void TelemetryImpl::receive_param_cal_accel_offset_y(MAVLinkParameters::Result r
     }
 }
 
-void TelemetryImpl::receive_param_cal_accel_offset_z(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_accel_offset_z(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for accel offset_z failed.";
         return;
     }
@@ -1660,9 +1666,10 @@ void TelemetryImpl::receive_param_cal_accel_offset_z(MAVLinkParameters::Result r
     }
 }
 
-void TelemetryImpl::receive_param_cal_gyro_offset_x(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_gyro_offset_x(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for gyro offset_x failed.";
         return;
     }
@@ -1674,9 +1681,10 @@ void TelemetryImpl::receive_param_cal_gyro_offset_x(MAVLinkParameters::Result re
     }
 }
 
-void TelemetryImpl::receive_param_cal_gyro_offset_y(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_gyro_offset_y(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for gyro offset_y failed.";
         return;
     }
@@ -1688,9 +1696,10 @@ void TelemetryImpl::receive_param_cal_gyro_offset_y(MAVLinkParameters::Result re
     }
 }
 
-void TelemetryImpl::receive_param_cal_gyro_offset_z(MAVLinkParameters::Result result, float value)
+void TelemetryImpl::receive_param_cal_gyro_offset_z(
+    MavlinkParameterSender::Result result, float value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param for gyro offset_z failed.";
         return;
     }
@@ -1702,9 +1711,9 @@ void TelemetryImpl::receive_param_cal_gyro_offset_z(MAVLinkParameters::Result re
     }
 }
 
-void TelemetryImpl::receive_param_hitl(MAVLinkParameters::Result result, int value)
+void TelemetryImpl::receive_param_hitl(MavlinkParameterSender::Result result, int value)
 {
-    if (result != MAVLinkParameters::Result::Success) {
+    if (result != MavlinkParameterSender::Result::Success) {
         LogErr() << "Error: Param to determine hitl failed.";
         return;
     }
@@ -2688,63 +2697,63 @@ void TelemetryImpl::check_calibration()
             // if any offset is 0 the calibration is not complete/unhealthy.
             _parent->get_param_float_async(
                 std::string("INS_GYROFFS_X"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_gyro_offset_x(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("INS_GYROFFS_Y"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_gyro_offset_y(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("INS_GYROFFS_Z"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_gyro_offset_z(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("INS_ACCOFFS_X"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_accel_offset_x(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("INS_ACCOFFS_Y"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_accel_offset_y(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("INS_ACCOFFS_Z"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_accel_offset_z(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("COMPASS_OFS_X"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_mag_offset_x(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("COMPASS_OFS_Y"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_mag_offset_y(result, value);
                 },
                 this);
 
             _parent->get_param_float_async(
                 std::string("COMPASS_OFS_Z"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_mag_offset_z(result, value);
                 },
                 this);
@@ -2752,28 +2761,28 @@ void TelemetryImpl::check_calibration()
         } else {
             _parent->get_param_int_async(
                 std::string("CAL_GYRO0_ID"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_cal_gyro(result, value);
                 },
                 this);
 
             _parent->get_param_int_async(
                 std::string("CAL_ACC0_ID"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_cal_accel(result, value);
                 },
                 this);
 
             _parent->get_param_int_async(
                 std::string("CAL_MAG0_ID"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_cal_mag(result, value);
                 },
                 this);
 
             _parent->get_param_int_async(
                 std::string("SYS_HITL"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_hitl(result, value);
                 },
                 this);
@@ -2787,63 +2796,63 @@ void TelemetryImpl::process_parameter_update(const std::string& name)
         if (name.compare("INS_GYROFFS_X") == 0) {
             _parent->get_param_float_async(
                 std::string("INS_GYROFFS_X"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_gyro_offset_x(result, value);
                 },
                 this);
         } else if (name.compare("INS_GYROFFS_Y") == 0) {
             _parent->get_param_float_async(
                 std::string("INS_GYROFFS_Y"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_gyro_offset_y(result, value);
                 },
                 this);
         } else if (name.compare("INS_GYROFFS_Z") == 0) {
             _parent->get_param_float_async(
                 std::string("INS_GYROFFS_Z"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_gyro_offset_z(result, value);
                 },
                 this);
         } else if (name.compare("INS_ACCOFFS_X") == 0) {
             _parent->get_param_float_async(
                 std::string("INS_ACCOFFS_X"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_accel_offset_x(result, value);
                 },
                 this);
         } else if (name.compare("INS_ACCOFFS_Y") == 0) {
             _parent->get_param_float_async(
                 std::string("INS_ACCOFFS_Y"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_accel_offset_y(result, value);
                 },
                 this);
         } else if (name.compare("INS_ACCOFFS_Z") == 0) {
             _parent->get_param_float_async(
                 std::string("INS_ACCOFFS_Z"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_accel_offset_z(result, value);
                 },
                 this);
         } else if (name.compare("COMPASS_OFS_X") == 0) {
             _parent->get_param_float_async(
                 std::string("COMPASS_OFS_X"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_mag_offset_x(result, value);
                 },
                 this);
         } else if (name.compare("COMPASS_OFS_Y") == 0) {
             _parent->get_param_float_async(
                 std::string("COMPASS_OFS_Y"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_mag_offset_y(result, value);
                 },
                 this);
         } else if (name.compare("COMPASS_OFS_Z") == 0) {
             _parent->get_param_float_async(
                 std::string("COMPASS_OFS_Z"),
-                [this](MAVLinkParameters::Result result, float value) {
+                [this](MavlinkParameterSender::Result result, float value) {
                     receive_param_cal_mag_offset_z(result, value);
                 },
                 this);
@@ -2852,7 +2861,7 @@ void TelemetryImpl::process_parameter_update(const std::string& name)
         if (name.compare("CAL_GYRO0_ID") == 0) {
             _parent->get_param_int_async(
                 std::string("CAL_GYRO0_ID"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_cal_gyro(result, value);
                 },
                 this);
@@ -2860,14 +2869,14 @@ void TelemetryImpl::process_parameter_update(const std::string& name)
         } else if (name.compare("CAL_ACC0_ID") == 0) {
             _parent->get_param_int_async(
                 std::string("CAL_ACC0_ID"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_cal_accel(result, value);
                 },
                 this);
         } else if (name.compare("CAL_MAG0_ID") == 0) {
             _parent->get_param_int_async(
                 std::string("CAL_MAG0_ID"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_cal_mag(result, value);
                 },
                 this);
@@ -2875,7 +2884,7 @@ void TelemetryImpl::process_parameter_update(const std::string& name)
         } else if (name.compare("SYS_HITL") == 0) {
             _parent->get_param_int_async(
                 std::string("SYS_HITL"),
-                [this](MAVLinkParameters::Result result, int32_t value) {
+                [this](MavlinkParameterSender::Result result, int32_t value) {
                     receive_param_hitl(result, value);
                 },
                 this);
