@@ -7,20 +7,14 @@
 #include <optional>
 #include <string>
 #include <variant>
+#include <cstring>
+#include <cassert>
 
 namespace mavsdk {
 
-// std::to_string doesn't work for std::string, so we need this workaround.
-template<typename T> std::string to_string(T&& value)
-{
-    return std::to_string(std::forward<T>(value));
-}
-
-inline std::string& to_string(std::string& value)
-{
-    return value;
-}
-
+/**
+ * This is a c++ helper for a mavlink extended or non-extended param value.
+ */
 class ParamValue {
 public:
     bool set_from_mavlink_param_value_bytewise(const mavlink_param_value_t& mavlink_value);
@@ -30,6 +24,9 @@ public:
     bool set_from_mavlink_param_ext_value(const mavlink_param_ext_value_t& mavlink_ext_value);
     bool set_from_xml(const std::string& type_str, const std::string& value_str);
     bool set_empty_type_from_xml(const std::string& type_str);
+    enum class Conversion { CAST, BYTEWISE };
+    bool set_from_mavlink_param_value(
+        const mavlink_param_value_t& mavlink_value, const Conversion& conversion);
 
     [[nodiscard]] MAV_PARAM_TYPE get_mav_param_type() const;
     [[nodiscard]] MAV_PARAM_EXT_TYPE get_mav_param_ext_type() const;
@@ -47,12 +44,14 @@ public:
     void set_float(float new_value);
     void set_custom(const std::string& new_value);
 
-    std::array<char, 128> get_128_bytes() const;
+    [[nodiscard]] std::array<char, 128> get_128_bytes() const;
 
     [[nodiscard]] std::string get_string() const;
 
-    template<typename T>[[nodiscard]] bool is() const
+    // Note: the implementation here needs to stay in the header,unfortunately.
+    template<typename T> [[nodiscard]] constexpr bool is() const
     {
+        // is this better ? std::holds_alternative<T>(_value)
         return (std::get_if<T>(&_value) != nullptr);
     }
 
@@ -62,6 +61,9 @@ public:
 
     [[nodiscard]] bool is_same_type(const ParamValue& rhs) const;
 
+    // update the value of a parameter without mutating its type
+    void update_value_typesafe(const ParamValue& new_value);
+
     bool operator==(const ParamValue& rhs) const
     {
         if (!is_same_type(rhs)) {
@@ -70,6 +72,14 @@ public:
         }
 
         return _value == rhs._value;
+    }
+    bool operator!=(const ParamValue& rhs) const
+    {
+        if (!is_same_type(rhs)) {
+            LogWarn() << "Trying to compare different types.";
+            return true;
+        }
+        return !(*this == rhs);
     }
 
     bool operator<(const ParamValue& rhs) const
@@ -96,6 +106,15 @@ public:
 
     [[nodiscard]] std::string typestr() const;
 
+    // returns true if this parameter needs the extended parameters' protocol
+    // (which is the case when its value is represented by a string)
+    [[nodiscard]] constexpr bool needs_extended() const
+    {
+        // true if it is a string, false otherwise.
+        return is<std::string>();
+    }
+
+private:
     std::variant<
         uint8_t,
         int8_t,

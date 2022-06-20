@@ -662,13 +662,13 @@ MavlinkParameterSender::Result SystemImpl::set_param(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    return _mavlink_parameter_sender.set_param(name, value, maybe_component_id, extended);
+    return _mavlink_parameter_sender.set_param(name, value);
 }
 
 MavlinkParameterSender::Result SystemImpl::set_param_float(
     const std::string& name, float value, std::optional<uint8_t> maybe_component_id, bool extended)
 {
-    return _mavlink_parameter_sender.set_param_float(name, value, maybe_component_id, extended);
+    return _mavlink_parameter_sender.set_param_float(name, value);
 }
 
 MavlinkParameterSender::Result SystemImpl::set_param_int(
@@ -677,7 +677,7 @@ MavlinkParameterSender::Result SystemImpl::set_param_int(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    return _mavlink_parameter_sender.set_param_int(name, value, maybe_component_id, extended);
+    return _mavlink_parameter_sender.set_param_int(name, value);
 }
 
 MavlinkParameterSender::Result
@@ -699,8 +699,7 @@ void SystemImpl::set_param_async(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    _mavlink_parameter_sender.set_param_async(
-        name, value, callback, cookie, maybe_component_id, extended);
+    _mavlink_parameter_sender.set_param_async(name, value, callback, cookie);
 }
 
 void SystemImpl::set_param_float_async(
@@ -711,8 +710,7 @@ void SystemImpl::set_param_float_async(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    _mavlink_parameter_sender.set_param_float_async(
-        name, value, callback, cookie, maybe_component_id, extended);
+    _mavlink_parameter_sender.set_param_float_async(name, value, callback, cookie);
 }
 
 void SystemImpl::set_param_int_async(
@@ -723,19 +721,18 @@ void SystemImpl::set_param_int_async(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    _mavlink_parameter_sender.set_param_int_async(
-        name, value, callback, cookie, maybe_component_id, extended);
+    _mavlink_parameter_sender.set_param_int_async(name, value, callback, cookie);
 }
 
 std::pair<MavlinkParameterSender::Result, float>
 SystemImpl::get_param_float(const std::string& name)
 {
-    return _mavlink_parameter_sender.get_param_float(name, {}, false);
+    return _mavlink_parameter_sender.get_param_float(name);
 }
 
 std::pair<MavlinkParameterSender::Result, int> SystemImpl::get_param_int(const std::string& name)
 {
-    return _mavlink_parameter_sender.get_param_int(name, {}, false);
+    return _mavlink_parameter_sender.get_param_int(name);
 }
 
 std::pair<MavlinkParameterSender::Result, std::string>
@@ -752,8 +749,7 @@ void SystemImpl::get_param_async(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    _mavlink_parameter_sender.get_param_async(
-        name, value, callback, cookie, maybe_component_id, extended);
+    _mavlink_parameter_sender.get_param_async(name, value, callback, cookie);
 }
 
 void SystemImpl::get_param_float_async(
@@ -763,8 +759,7 @@ void SystemImpl::get_param_float_async(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    _mavlink_parameter_sender.get_param_float_async(
-        name, callback, cookie, maybe_component_id, extended);
+    _mavlink_parameter_sender.get_param_float_async(name, callback, cookie);
 }
 
 void SystemImpl::get_param_int_async(
@@ -774,8 +769,7 @@ void SystemImpl::get_param_int_async(
     std::optional<uint8_t> maybe_component_id,
     bool extended)
 {
-    _mavlink_parameter_sender.get_param_int_async(
-        name, callback, cookie, maybe_component_id, extended);
+    _mavlink_parameter_sender.get_param_int_async(name, callback, cookie);
 }
 
 void SystemImpl::get_param_custom_async(
@@ -1310,6 +1304,11 @@ void SystemImpl::subscribe_param_custom(
     const void* cookie)
 {
     _mavlink_parameter_sender.subscribe_param_custom_changed(name, callback, cookie);
+}
+
+void SystemImpl::late_init(uint8_t target_component_id, bool use_extended)
+{
+    _mavlink_parameter_sender.late_init(target_component_id, use_extended);
 }
 
 } // namespace mavsdk

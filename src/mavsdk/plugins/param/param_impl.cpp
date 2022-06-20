@@ -92,10 +92,20 @@ Param::AllParams ParamImpl::get_all_params()
             tmp_param.name = param_pair.first;
             tmp_param.value = param_pair.second.get<int8_t>();
             res.int_params.push_back(tmp_param);
+        } else if (param_pair.second.is<std::string>()) {
+            Param::CustomParam tmp_param;
+            tmp_param.name = param_pair.first;
+            tmp_param.value = param_pair.second.get<std::string>();
+            res.custom_params.push_back(tmp_param);
         }
     }
 
     return res;
+}
+
+void ParamImpl::late_init(uint8_t target_component_id, bool use_extended)
+{
+    _parent->late_init(target_component_id, use_extended);
 }
 
 Param::Result

@@ -122,7 +122,8 @@ FollowMe::Result FollowMeImpl::set_config(const FollowMe::Config& config)
 
     // Send configuration to Vehicle
     if (_config.follow_height_m != height) {
-        if (_parent->set_param_float("FLW_TGT_HT", height) == MavlinkParameterSender::Result::Success) {
+        if (_parent->set_param_float("FLW_TGT_HT", height) ==
+            MavlinkParameterSender::Result::Success) {
             _config.follow_height_m = height;
         } else {
             success = false;
