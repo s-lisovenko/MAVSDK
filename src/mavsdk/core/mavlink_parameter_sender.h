@@ -33,23 +33,13 @@ public:
         MavlinkMessageHandler& message_handler,
         TimeoutHandler& timeout_handler,
         TimeoutSCallback timeout_s_callback,
-        // target component id (the param providing component this sender should talk to)
         uint8_t target_component_id = MAV_COMP_ID_AUTOPILOT1,
-        // weather to use the extended protocol or not - it is not possible to mix them up.
-        bool use_extended = false);
+        bool use_extended_protocol = false);
     ~MavlinkParameterSender();
+
     // Non-copyable
     MavlinkParameterSender(const MavlinkParameterSender&) = delete;
     const MavlinkParameterSender& operator=(const MavlinkParameterSender&) = delete;
-
-    /**
-     * argh what the crap, we could have nicely done these in the constructor with const
-     * @param target_component_id target component id (the param providing component this sender
-     * should talk to)
-     * @param use_extended weather to use the extended protocol or not - it is not possible to mix
-     * them up.
-     */
-    void late_init(uint8_t target_component_id, bool use_extended);
 
     enum class Result {
         Success,
@@ -61,40 +51,28 @@ public:
         ValueUnsupported,
         Failed,
         ParamValueTooLong,
-        UnknownError
+        StringTypeUnsupported,
+        UnknownError,
     };
 
     Result set_param(const std::string& name, ParamValue value);
 
     using SetParamCallback = std::function<void(Result result)>;
 
-    /**
-     * Send a message to the server to change the parameter indexed by name to the specified value.
-     * Once the result of this operation is known, the user-specified callback is called with the
-     * result of this (set value) operation. Note that to change a server parameter, one needs to
-     * know not only the value to set, but also the exact type this value has.
-     */
+    // This call requires knowing the exact type of the parameter to set.
     void set_param_async(
         const std::string& name,
         ParamValue value,
         const SetParamCallback& callback,
         const void* cookie);
 
-    Result set_param_int(
-        const std::string& name,
-        int32_t value,
-        // Needs to be false by default, I don't know where people using the library assume the
-        // internal type hack is applied
-        bool adhere_to_mavlink_specs = false);
+    Result set_param_int(const std::string& name, int32_t value);
 
     void set_param_int_async(
         const std::string& name,
         int32_t value,
         const SetParamCallback& callback,
-        const void* cookie,
-        // Needs to be false by default, I don't know where people using the library assume the
-        // internal type hack is applied
-        bool adhere_to_mavlink_specs = false);
+        const void* cookie);
 
     Result set_param_float(const std::string& name, float value);
 
@@ -110,38 +88,24 @@ public:
         const void* cookie = nullptr);
 
     using GetParamAnyCallback = std::function<void(Result, ParamValue)>;
-    /**
-     * This is the only type of communication from client to server that is possible in regard to
-     * type safety - Ask the server for a parameter (when asking, the parameter type is still
-     * unknown) and then, once we got a successful response from the server we know the parameter
-     * type and its value.
-     * @param name name of the parameter to get.
-     * @param callback callback that is called with the response from the server (type and value for
-     * this key are now known from the response)
-     */
+
+    // These calls return to you the type and value of a param.
     void get_param_async(const std::string& name, GetParamAnyCallback callback, const void* cookie);
     std::pair<Result, ParamValue> get_param(const std::string& name);
 
-    /**
-     * This is legacy code, the original implementation takes a ParamValue to check and infer the
-     * type. If the type returned by get_param_async( typeless) matches the type provided by @param
-     * value_type, the callback is called with Result::Success, one of the error codes otherwise.
-     * TODO: In my opinion, this is not the most verbose implementation, since a ParamValue is
-     * constructed just to infer the type.
-     */
+    // The ParamValue is constructed just to infer the type.
     void get_param_async(
         const std::string& name,
         ParamValue value_type,
         const GetParamAnyCallback& callback,
         const void* cookie);
 
-    /**
-     * This could replace the code above.
-     * We use get_param_async to get the current type and value for a parameter, then check the type
-     * of the obtained parameter and return the result with the appropriate error codes via the
-     * callback.
-     */
+    // This could replace the code above.
+    // We use get_param_async to get the current type and value for a parameter, then check the type
+    // of the obtained parameter and return the result with the appropriate error codes via the
+    // callback.
     template<class T> using GetParamTypesafeCallback = std::function<void(Result, T value)>;
+
     template<class T>
     void get_param_async_typesafe(
         const std::string& name, GetParamTypesafeCallback<T> callback, const void* cookie);
@@ -168,29 +132,23 @@ public:
         const std::string& name, const GetParamCustomCallback& callback, const void* cookie);
 
     enum GetAllParamsResult {
-        ConnectionError, // Cannot send message(s)
-        InconsistentData, // The param server is buggy and doesn't allow parameter synchronization
-        Timeout, // There is too much packet loss, the synchronization did not succeed. Perhaps try
-                 // again.
-        Unknown, // Something unexpected happened, can point to a buggy param server
-        Success // We got the full parameter set from the server
+        Unknown,
+        Success,
+        Timeout,
+        ConnectionError,
+        InconsistentData,
+        Busy,
     };
 
     using GetAllParamsCallback =
         std::function<void(GetAllParamsResult result, std::map<std::string, ParamValue> set)>;
-    /**
-     * Try to obtain the complete parameter set (all the parameters the server provides). In case of
-     * packet loss/ a param server with a lot of parameters, this might take a significant amount of
-     * time. The callback is called with a full parameter set on success, an empty parameter set on
-     * failure.
-     * @param callback callback to be called when done.
-     * @param clear_cache when set to true, clear the previous full / partial parameter set from the
-     * server. This is needed in case the server parameter set is invariant.
-     */
-    void get_all_params_async(GetAllParamsCallback callback, bool clear_cache = false);
-    std::map<std::string, ParamValue> get_all_params(bool clear_cache = false);
+
+    void get_all_params_async(GetAllParamsCallback callback);
+    std::pair<GetAllParamsResult, std::map<std::string, ParamValue>> get_all_params();
 
     void cancel_all_param(const void* cookie);
+
+    void clear_cache();
 
     void do_work();
 
@@ -202,14 +160,13 @@ private:
     void process_param_ext_value(const mavlink_message_t& message);
     void process_param_ext_ack(const mavlink_message_t& message);
     void receive_timeout();
+    void receive_get_all_params_timeout();
 
     Sender& _sender;
     MavlinkMessageHandler& _message_handler;
     TimeoutHandler& _timeout_handler;
     TimeoutSCallback _timeout_s_callback;
-    // target component id (the param providing component this sender should talk to)
     uint8_t _target_component_id = MAV_COMP_ID_AUTOPILOT1;
-    // weather to use the extended protocol or not - it is not possible to mix them up.
     bool _use_extended = false;
 
     // These are specific depending on the work item type
@@ -233,7 +190,7 @@ private:
         int retries_to_do{3};
         // we need to keep a copy of the message in case a transmission is lost and we want to
         // re-transmit it.
-        // TODO: Don't we need a new message sequence number for that ? Not sure.
+        // TODO: we should not keep the message because it messes with the sequence.
         mavlink_message_t mavlink_message{};
 
         explicit WorkItem(
@@ -276,7 +233,6 @@ private:
         uint16_t param_idx,
         uint16_t all_param_count,
         const ParamValue& received_value);
-    void check_all_params_timeout();
     // Create a callback for a WorkItemGet that performs the following steps:
     // 1) Check if any parameter of the parameter set is missing.
     // 2) If yes, request the first missing parameter and recursively add the same callback to check

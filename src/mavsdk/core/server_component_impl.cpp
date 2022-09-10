@@ -14,11 +14,7 @@ ServerComponentImpl::ServerComponentImpl(MavsdkImpl& mavsdk_impl, uint8_t compon
         mavsdk_impl.mavlink_message_handler,
         mavsdk_impl.timeout_handler,
         [this]() { return _mavsdk_impl.timeout_s(); }),
-    _mavlink_parameter_receiver(
-        _our_sender,
-        mavsdk_impl.mavlink_message_handler,
-        mavsdk_impl.timeout_handler,
-        [this]() { return _mavsdk_impl.timeout_s(); }),
+    _mavlink_parameter_receiver(_our_sender, mavsdk_impl.mavlink_message_handler),
     _mavlink_request_message_handler(mavsdk_impl, *this, _mavlink_command_receiver)
 {
     register_mavlink_command_handler(

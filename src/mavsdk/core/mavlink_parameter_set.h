@@ -57,7 +57,7 @@ public:
     // something different.
     static std::string param_identifier_to_string(const ParamIdentifier& param_identifier);
     // Mavlink uses uint16_t for parameter indices, which allows for that many parameters maximum
-    static constexpr auto MAX_N_PARAMETERS = 65535;
+    static constexpr auto MAX_N_PARAMETERS = std::numeric_limits<uint16_t>::max();
     /*
      * Return the n of parameters, either from an extended or non-extended perspective.
      * ( we need to hide parameters that need extended from non-extended queries).

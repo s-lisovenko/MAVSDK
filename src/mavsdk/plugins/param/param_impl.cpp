@@ -71,8 +71,12 @@ Param::AllParams ParamImpl::get_all_params()
 {
     auto tmp = _parent->get_all_params();
 
+    if (tmp.first != MavlinkParameterSender::GetAllParamsResult::Success) {
+        return {};
+    }
+
     Param::AllParams res{};
-    for (auto const& param_pair : tmp) {
+    for (auto const& param_pair : tmp.second) {
         if (param_pair.second.is<float>()) {
             Param::FloatParam tmp_param;
             tmp_param.name = param_pair.first;

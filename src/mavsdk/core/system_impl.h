@@ -149,7 +149,8 @@ public:
         std::optional<uint8_t> maybe_component_id = {},
         bool extended = false);
 
-    std::map<std::string, ParamValue> get_all_params();
+    std::pair<MavlinkParameterSender::GetAllParamsResult, std::map<std::string, ParamValue>>
+    get_all_params();
 
     MavlinkParameterSender::Result
     set_param_custom(const std::string& name, const std::string& value);
@@ -171,8 +172,6 @@ public:
         const void* cookie,
         std::optional<uint8_t> maybe_component_id = {},
         bool extended = false);
-
-    void late_init(uint8_t target_component_id, bool use_extended);
 
     FlightMode get_flight_mode() const;
 
@@ -339,6 +338,8 @@ private:
 
     MavlinkStatustextHandler _statustext_handler{};
 
+    MavlinkParameterSender* param_sender(uint8_t component_id, bool extended);
+
     struct StatustextCallback {
         std::function<void(const MavlinkStatustextHandler::Statustext&)> callback;
         void* cookie;
@@ -368,7 +369,12 @@ private:
 
     static constexpr double _ping_interval_s = 5.0;
 
-    MavlinkParameterSender _mavlink_parameter_sender;
+    struct ParamSenderEntry {
+        std::unique_ptr<MavlinkParameterSender> parameter_sender;
+        uint8_t component_id;
+        bool extended;
+    };
+    std::vector<ParamSenderEntry> _mavlink_parameter_senders;
     MavlinkCommandSender _command_sender;
 
     Timesync _timesync;

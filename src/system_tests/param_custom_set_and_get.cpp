@@ -48,7 +48,7 @@ TEST(SystemTest, ParamCustomSetAndGet)
     ASSERT_TRUE(system->has_autopilot());
 
     auto param = Param{system};
-    param.late_init(1, true);
+    param.select_component(1, Param::ProtocolVersion::Ext);
 
     const auto data = generate_uppercase_ascii(128);
 

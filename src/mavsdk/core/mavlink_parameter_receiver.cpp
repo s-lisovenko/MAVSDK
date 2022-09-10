@@ -6,8 +6,6 @@ namespace mavsdk {
 MavlinkParameterReceiver::MavlinkParameterReceiver(
     Sender& sender,
     MavlinkMessageHandler& message_handler,
-    TimeoutHandler& timeout_handler_unused,
-    TimeoutSCallback timeout_s_callback_unused,
     std::optional<std::map<std::string, ParamValue>> optional_param_values) :
     _sender(sender),
     _message_handler(message_handler)
@@ -22,6 +20,7 @@ MavlinkParameterReceiver::MavlinkParameterReceiver(
             }
         }
     }
+
     _message_handler.register_one(
         MAVLINK_MSG_ID_PARAM_SET,
         [this](const mavlink_message_t& message) { process_param_set(message); },

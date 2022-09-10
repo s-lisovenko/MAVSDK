@@ -3,43 +3,39 @@
 #include "system_tests_helper.h"
 #include "plugins/param/param.h"
 #include "plugins/param_server/param_server.h"
-<<<<<<< HEAD
-=======
-//#include "plugins/mavlink_passthrough/mavlink_passthrough.h"
->>>>>>> c6ac28ea (Improve mavlink parameters after split)
 #include <chrono>
 #include <utility>
 #include <vector>
 #include <thread>
-<<<<<<< HEAD
-
-using namespace mavsdk;
-
-static constexpr unsigned num_params_per_type = 100;
-
-std::vector<std::pair<std::string, float>> generate_float_params()
-{
-    std::vector<std::pair<std::string, float>> params;
-
-    for (unsigned i = 0; i < num_params_per_type; ++i) {
-        params.emplace_back(std::string("TEST_BLA") + std::to_string(i), 42.0f + i);
-    }
-
-    return params;
-}
-
-std::vector<std::pair<std::string, int>> generate_int_params()
-{
-    std::vector<std::pair<std::string, int>> params;
-
-    for (unsigned i = 0; i < num_params_per_type; ++i) {
-        params.emplace_back(std::string("TEST_FOO") + std::to_string(i), 42.0f + i);
-    }
-
-    return params;
-}
-
-=======
+//<<<<<<< HEAD
+//
+// using namespace mavsdk;
+//
+// static constexpr unsigned num_params_per_type = 100;
+//
+// std::vector<std::pair<std::string, float>> generate_float_params()
+//{
+//    std::vector<std::pair<std::string, float>> params;
+//
+//    for (unsigned i = 0; i < num_params_per_type; ++i) {
+//        params.emplace_back(std::string("TEST_BLA") + std::to_string(i), 42.0f + i);
+//    }
+//
+//    return params;
+//}
+//
+// std::vector<std::pair<std::string, int>> generate_int_params()
+//{
+//    std::vector<std::pair<std::string, int>> params;
+//
+//    for (unsigned i = 0; i < num_params_per_type; ++i) {
+//        params.emplace_back(std::string("TEST_FOO") + std::to_string(i), 42.0f + i);
+//    }
+//
+//    return params;
+//}
+//
+//=======
 #include <map>
 
 using namespace mavsdk;
@@ -89,7 +85,6 @@ static void assert_equal(const std::map<std::string, T1>& values, const std::vec
     }
 }
 
->>>>>>> c6ac28ea (Improve mavlink parameters after split)
 TEST(SystemTest, ParamGetAll)
 {
     Mavsdk mavsdk_groundstation;
@@ -113,27 +108,25 @@ TEST(SystemTest, ParamGetAll)
 
     ASSERT_TRUE(system->has_autopilot());
 
-<<<<<<< HEAD
-    auto param = Param{system};
-
-    // Add many params
-    for (const auto& float_param : generate_float_params()) {
-        EXPECT_EQ(
-            param_server.provide_param_float(float_param.first, float_param.second),
-            ParamServer::Result::Success);
-    }
-    for (const auto& int_param : generate_int_params()) {
-        EXPECT_EQ(
-            param_server.provide_param_int(int_param.first, int_param.second),
-            ParamServer::Result::Success);
-    }
-
-    auto all_params = param.get_all_params();
-
-    EXPECT_EQ(all_params.float_params.size(), generate_float_params().size());
-    EXPECT_EQ(all_params.int_params.size(), generate_int_params().size());
-=======
-    auto param_sender = Param{system};
+    //    auto param = Param{system};
+    //
+    //    // Add many params
+    //    for (const auto& float_param : generate_float_params()) {
+    //        EXPECT_EQ(
+    //            param_server.provide_param_float(float_param.first, float_param.second),
+    //            ParamServer::Result::Success);
+    //    }
+    //    for (const auto& int_param : generate_int_params()) {
+    //        EXPECT_EQ(
+    //            param_server.provide_param_int(int_param.first, int_param.second),
+    //            ParamServer::Result::Success);
+    //    }
+    //
+    //    auto all_params = param.get_all_params();
+    //
+    //    EXPECT_EQ(all_params.float_params.size(), generate_float_params().size());
+    //    EXPECT_EQ(all_params.int_params.size(), generate_int_params().size());
+    //=======
 
     // we emulate a packet loss of every second packet - this obviously doesn't really emulate true
     // packet loss, but will at least test the packet loss resilience a bit. Since the param sender
@@ -153,40 +146,39 @@ TEST(SystemTest, ParamGetAll)
         return false;
     });*/
 
+    // TODO: next step: split param storage for V1 and Ext params.
+
     const auto test_float_params = generate_float_params();
     const auto test_int_params = generate_int_params();
     const auto test_string_params = generate_string_params();
+
     // Add many params (these don't need extended)
     for (auto const& [key, val] : test_float_params) {
         EXPECT_EQ(param_server.provide_param_float(key, val), ParamServer::Result::Success);
-    }
-    // We also add a couple of std::string parameters - note that they won't show up in
-    // get_all_params() when using the non-extended version also note that we add the string
-    // parameters before then adding the int params, which also tests if the server handles the
-    // "hiding" properly (now the indices of the non-ext params are different to the extended ones).
-    for (auto const& [key, val] : test_string_params) {
-        EXPECT_EQ(param_server.provide_param_custom(key, val), ParamServer::Result::Success);
     }
     for (auto const& [key, val] : test_int_params) {
         EXPECT_EQ(param_server.provide_param_int(key, val), ParamServer::Result::Success);
     }
 
+    // for (auto const& [key, val] : test_string_params) {
+    //    EXPECT_EQ(param_server.provide_param_custom(key, val), ParamServer::Result::Success);
+    //}
+
     {
+        auto param_sender = Param{system};
         // Here we use the non-extended protocol
-        param_sender.late_init(1, false);
+        param_sender.select_component(1, Param::ProtocolVersion::V1);
         const auto all_params = param_sender.get_all_params();
         assert_equal<int, Param::IntParam>(test_int_params, all_params.int_params);
         assert_equal<float, Param::FloatParam>(test_float_params, all_params.float_params);
     }
     {
+        auto param_sender = Param{system};
         // now we do the same, but this time with the extended protocol
-        param_sender.late_init(1, true);
+        param_sender.select_component(1, Param::ProtocolVersion::Ext);
         const auto all_params = param_sender.get_all_params();
-        assert_equal<int, Param::IntParam>(test_int_params, all_params.int_params);
-        assert_equal<float, Param::FloatParam>(test_float_params, all_params.float_params);
+        // assert_equal<int, Param::IntParam>(test_int_params, all_params.int_params);
+        // assert_equal<float, Param::FloatParam>(test_float_params, all_params.float_params);
         assert_equal<std::string, Param::CustomParam>(test_string_params, all_params.custom_params);
     }
-
->>>>>>> c6ac28ea (Improve mavlink parameters after split)
-    std::this_thread::sleep_for(std::chrono::seconds(1));
 }
