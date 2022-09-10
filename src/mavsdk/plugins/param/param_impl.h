@@ -34,7 +34,7 @@ public:
 
     Param::AllParams get_all_params();
 
-    void late_init(uint8_t target_component_id, bool use_extended);
+    Param::Result select_component(int32_t component_id, Param::ProtocolVersion protocol_version);
 
 private:
     static Param::Result

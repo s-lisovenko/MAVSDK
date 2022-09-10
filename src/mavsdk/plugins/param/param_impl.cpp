@@ -1,6 +1,7 @@
 #include <functional>
 #include "param_impl.h"
 #include "system.h"
+#include "unused.h"
 
 namespace mavsdk {
 
@@ -103,9 +104,13 @@ Param::AllParams ParamImpl::get_all_params()
     return res;
 }
 
-void ParamImpl::late_init(uint8_t target_component_id, bool use_extended)
+Param::Result
+ParamImpl::select_component(int32_t component_id, Param::ProtocolVersion protocol_version)
 {
-    _parent->late_init(target_component_id, use_extended);
+    // FIXME: implement
+    UNUSED(component_id);
+    UNUSED(protocol_version);
+    return Param::Result::Unknown;
 }
 
 Param::Result

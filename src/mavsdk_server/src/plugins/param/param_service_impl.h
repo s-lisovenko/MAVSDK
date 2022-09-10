@@ -41,6 +41,36 @@ public:
         response->set_allocated_param_result(rpc_param_result);
     }
 
+    static rpc::param::ProtocolVersion
+    translateToRpcProtocolVersion(const mavsdk::Param::ProtocolVersion& protocol_version)
+    {
+        switch (protocol_version) {
+            default:
+                LogErr() << "Unknown protocol_version enum value: "
+                         << static_cast<int>(protocol_version);
+            // FALLTHROUGH
+            case mavsdk::Param::ProtocolVersion::V1:
+                return rpc::param::PROTOCOL_VERSION_V1;
+            case mavsdk::Param::ProtocolVersion::Ext:
+                return rpc::param::PROTOCOL_VERSION_EXT;
+        }
+    }
+
+    static mavsdk::Param::ProtocolVersion
+    translateFromRpcProtocolVersion(const rpc::param::ProtocolVersion protocol_version)
+    {
+        switch (protocol_version) {
+            default:
+                LogErr() << "Unknown protocol_version enum value: "
+                         << static_cast<int>(protocol_version);
+            // FALLTHROUGH
+            case rpc::param::PROTOCOL_VERSION_V1:
+                return mavsdk::Param::ProtocolVersion::V1;
+            case rpc::param::PROTOCOL_VERSION_EXT:
+                return mavsdk::Param::ProtocolVersion::Ext;
+        }
+    }
+
     static std::unique_ptr<rpc::param::IntParam>
     translateToRpcIntParam(const mavsdk::Param::IntParam& int_param)
     {
@@ -398,6 +428,35 @@ public:
 
         if (response != nullptr) {
             response->set_allocated_params(translateToRpcAllParams(result).release());
+        }
+
+        return grpc::Status::OK;
+    }
+
+    grpc::Status SelectComponent(
+        grpc::ServerContext* /* context */,
+        const rpc::param::SelectComponentRequest* request,
+        rpc::param::SelectComponentResponse* response) override
+    {
+        if (_lazy_plugin.maybe_plugin() == nullptr) {
+            if (response != nullptr) {
+                auto result = mavsdk::Param::Result::NoSystem;
+                fillResponseWithResult(response, result);
+            }
+
+            return grpc::Status::OK;
+        }
+
+        if (request == nullptr) {
+            LogWarn() << "SelectComponent sent with a null request! Ignoring...";
+            return grpc::Status::OK;
+        }
+
+        auto result = _lazy_plugin.maybe_plugin()->select_component(
+            request->component_id(), translateFromRpcProtocolVersion(request->protocol_version()));
+
+        if (response != nullptr) {
+            fillResponseWithResult(response, result);
         }
 
         return grpc::Status::OK;
