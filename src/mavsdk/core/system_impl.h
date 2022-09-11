@@ -149,8 +149,7 @@ public:
         std::optional<uint8_t> maybe_component_id = {},
         bool extended = false);
 
-    std::pair<MavlinkParameterSender::GetAllParamsResult, std::map<std::string, ParamValue>>
-    get_all_params();
+    std::pair<MavlinkParameterSender::Result, std::map<std::string, ParamValue>> get_all_params();
 
     MavlinkParameterSender::Result
     set_param_custom(const std::string& name, const std::string& value);

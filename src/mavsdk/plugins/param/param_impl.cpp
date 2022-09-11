@@ -71,7 +71,7 @@ Param::AllParams ParamImpl::get_all_params()
 {
     auto tmp = _parent->get_all_params();
 
-    if (tmp.first != MavlinkParameterSender::GetAllParamsResult::Success) {
+    if (tmp.first != MavlinkParameterSender::Result::Success) {
         return {};
     }
 

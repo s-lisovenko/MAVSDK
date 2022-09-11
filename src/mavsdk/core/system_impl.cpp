@@ -686,7 +686,7 @@ SystemImpl::set_param_custom(const std::string& name, const std::string& value)
     return param_sender(1, false)->set_param_custom(name, value);
 }
 
-std::pair<MavlinkParameterSender::GetAllParamsResult, std::map<std::string, ParamValue>>
+std::pair<MavlinkParameterSender::Result, std::map<std::string, ParamValue>>
 SystemImpl::get_all_params()
 {
     return param_sender(1, false)->get_all_params();
