@@ -149,10 +149,13 @@ public:
         std::optional<uint8_t> maybe_component_id = {},
         bool extended = false);
 
-    std::pair<MavlinkParameterSender::Result, std::map<std::string, ParamValue>> get_all_params();
+    std::pair<MavlinkParameterSender::Result, std::map<std::string, ParamValue>>
+    get_all_params(std::optional<uint8_t> maybe_component_id = {}, bool extended = false);
 
-    MavlinkParameterSender::Result
-    set_param_custom(const std::string& name, const std::string& value);
+    MavlinkParameterSender::Result set_param_custom(
+        const std::string& name,
+        const std::string& value,
+        std::optional<uint8_t> maybe_component_id = {});
 
     using SetParamCallback = std::function<void(MavlinkParameterSender::Result result)>;
 
@@ -190,10 +193,16 @@ public:
     using GetParamCustomCallback =
         std::function<void(MavlinkParameterSender::Result result, const std::string& value)>;
 
-    std::pair<MavlinkParameterSender::Result, float> get_param_float(const std::string& name);
-    std::pair<MavlinkParameterSender::Result, int> get_param_int(const std::string& name);
+    std::pair<MavlinkParameterSender::Result, float> get_param_float(
+        const std::string& name,
+        std::optional<uint8_t> maybe_component_id = {},
+        bool extended = false);
+    std::pair<MavlinkParameterSender::Result, int> get_param_int(
+        const std::string& name,
+        std::optional<uint8_t> maybe_component_id = {},
+        bool extended = false);
     std::pair<MavlinkParameterSender::Result, std::string>
-    get_param_custom(const std::string& name);
+    get_param_custom(const std::string& name, std::optional<uint8_t> maybe_component_id = {});
 
     // These methods can be used to cache a parameter when a system connects. For that
     // the callback can just be set to nullptr.

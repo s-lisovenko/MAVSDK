@@ -610,10 +610,10 @@ bool ParamValue::operator==(const std::string& value_str) const
     }
 }
 
-std::ostream& operator<<(std::ostream& strm, const ParamValue& obj)
+std::ostream& operator<<(std::ostream& str, const ParamValue& obj)
 {
-    strm << "ParamValue{" << obj.typestr() << ":" << obj.get_string() << "}";
-    return strm;
+    str << "ParamValue{" << obj.typestr() << ":" << obj.get_string() << "}";
+    return str;
 }
 
 [[nodiscard]] std::string ParamValue::typestr() const

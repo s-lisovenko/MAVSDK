@@ -106,12 +106,11 @@ public:
 
     [[nodiscard]] std::string typestr() const;
 
-    // returns true if this parameter needs the extended parameters' protocol
-    // (which is the case when its value is represented by a string)
     [[nodiscard]] constexpr bool needs_extended() const
     {
-        // true if it is a string, false otherwise.
-        return is<std::string>();
+        // Returns true if this parameter needs the extended parameters' protocol
+        // which is the case when its value is represented by a string or bigger than 4 bytes.
+        return is<std::string>() || is<uint64_t>() || is<int64_t>() || is<double>();
     }
 
 private:
@@ -130,6 +129,6 @@ private:
         _value{};
 };
 
-std::ostream& operator<<(std::ostream& strm, const ParamValue& obj);
+std::ostream& operator<<(std::ostream& str, const ParamValue& obj);
 
 } // namespace mavsdk

@@ -6,7 +6,8 @@
 #include "locked_queue.h"
 #include "param_value.h"
 #include "mavlink_parameter_subscription.h"
-#include "mavlink_parameter_set.h"
+#include "mavlink_parameter_cache.h"
+#include "mavlink_parameter_helper.h"
 
 #include <array>
 #include <cstddef>
@@ -162,6 +163,8 @@ private:
 
     struct WorkItemGetAll {
         const GetAllParamsCallback callback;
+        uint16_t count;
+        bool rerequesting;
     };
 
     struct WorkItem {
@@ -180,10 +183,11 @@ private:
     void process_param_ext_value(const mavlink_message_t& message);
     void process_param_ext_ack(const mavlink_message_t& message);
     void receive_timeout();
-    void receive_get_all_params_timeout();
 
     mavlink_message_t create_set_param_message(WorkItemSet& work_item);
     mavlink_message_t create_get_param_message(WorkItemGet& work_item);
+    mavlink_message_t create_get_param_message(
+        const std::array<char, PARAM_ID_LEN>& param_id_buff, int16_t param_index);
     mavlink_message_t create_request_list_message();
 
     Sender& _sender;
@@ -195,35 +199,17 @@ private:
 
     // These are specific depending on the work item type
     LockedQueue<WorkItem> _work_queue{};
-
     void* _timeout_cookie = nullptr;
 
-    std::mutex _all_params_mutex{};
-    GetAllParamsCallback _all_params_callback;
-    void* _all_params_timeout_cookie{nullptr};
-    ParamSetFromServer _param_set_from_server;
+    MavlinkParameterCache _param_cache{};
 
-    bool _parameter_debugging = true;
+    bool _parameter_debugging = false;
 
     // Validate if the response matches what was given in the work queue
     static bool validate_id_or_index(
         const std::variant<std::string, int16_t>& original,
         const std::string& param_id,
         int16_t param_index);
-
-    // This adds the given parameter to the parameter set cache (if possible) and then checks and
-    // call the _all_params_callback() if it is set and the parameter set has become complete after
-    // adding this parameter.
-    void add_param_to_cached_parameter_set(
-        const std::string& safe_param_id,
-        uint16_t param_idx,
-        uint16_t all_param_count,
-        const ParamValue& received_value);
-    // Create a callback for a WorkItemGet that performs the following steps:
-    // 1) Check if any parameter of the parameter set is missing.
-    // 2) If yes, request the first missing parameter and recursively add the same callback to check
-    // and request again 3) If no, terminate.
-    GetParamAnyCallback create_recursive_callback();
 };
 
 } // namespace mavsdk

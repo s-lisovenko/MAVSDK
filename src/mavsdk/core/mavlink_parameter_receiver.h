@@ -7,7 +7,7 @@
 #include "param_value.h"
 #include "locked_queue.h"
 #include "mavlink_parameter_subscription.h"
-#include "mavlink_parameter_set.h"
+#include "mavlink_parameter_cache.h"
 
 #include <map>
 #include <string>
@@ -45,11 +45,14 @@ public:
     ~MavlinkParameterReceiver();
 
     enum class Result {
-        Success, // All Ok
-        WrongType, // Wrong type provided
-        ParamNameTooLong, // param name provided too long
-        NotFound, // param not found
-        ParamValueTooLong, // value for param of type string doesn't fit into extended protocol.
+        Success,
+        WrongType,
+        ParamNameTooLong,
+        NotFound,
+        ParamValueTooLong,
+        ParamExistsAlready,
+        TooManyParams,
+        ParamNotFound,
     };
 
     /**
@@ -119,16 +122,16 @@ private:
     MavlinkMessageHandler& _message_handler;
 
     std::mutex _all_params_mutex{};
-    MavlinkParameterSet _param_set;
+    MavlinkParameterCache _param_cache{};
 
     // response: broadcast a specific parameter if found, ignores string parameters
     void process_param_request_read(const mavlink_message_t& message);
     //  response: broadcast a specific parameter if found
     void process_param_ext_request_read(const mavlink_message_t& message);
-    // send the appropriate response on a read request with a valid identifier. (weather this
-    // parameter then exists is still unchecked)
-    void internal_process_param_request_read(
-        const std::variant<std::string, uint16_t>& identifier, bool extended);
+
+    void internal_process_param_request_read_by_id(const std::string& id, bool extended);
+    void internal_process_param_request_read_by_index(std::uint16_t index, bool extended);
+
     //  response: broadcast all parameters, ignores string parameters
     void process_param_request_list(const mavlink_message_t& message);
     //  response: broadcast all parameters
@@ -179,7 +182,7 @@ private:
     // same layout). returns the identifier that should be used or nothing if the message is
     // ill-formed. See https://mavlink.io/en/messages/common.html#PARAM_REQUEST_READ and
     // https://mavlink.io/en/messages/common.html#PARAM_EXT_REQUEST_READ
-    static std::optional<std::variant<std::string, std::uint16_t>>
+    static std::variant<std::monostate, std::string, std::uint16_t>
     extract_request_read_param_identifier(int16_t param_index, const char* param_id);
 };
 

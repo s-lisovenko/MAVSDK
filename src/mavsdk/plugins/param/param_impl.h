@@ -39,6 +39,9 @@ public:
 private:
     static Param::Result
     result_from_mavlink_parameter_sender_result(MavlinkParameterSender::Result result);
+
+    uint8_t _component_id{MAV_COMP_ID_AUTOPILOT1};
+    Param::ProtocolVersion _protocol_version{Param::ProtocolVersion::V1};
 };
 
 } // namespace mavsdk

@@ -7,6 +7,7 @@
 #include "ardupilot_custom_mode.h"
 #include "request_message.h"
 #include "callback_list.tpp"
+#include "unused.h"
 #include <cassert>
 #include <cstdlib>
 #include <functional>
@@ -56,7 +57,7 @@ SystemImpl::~SystemImpl()
 void SystemImpl::init(uint8_t system_id, uint8_t comp_id, bool connected)
 {
     _target_address.system_id = system_id;
-    // FIXME: for now use this as a default.
+    // We use this as a default.
     _target_address.component_id = MAV_COMP_ID_AUTOPILOT1;
 
     if (connected) {
@@ -680,16 +681,18 @@ MavlinkParameterSender::Result SystemImpl::set_param_int(
         ->set_param_int(name, value);
 }
 
-MavlinkParameterSender::Result
-SystemImpl::set_param_custom(const std::string& name, const std::string& value)
+MavlinkParameterSender::Result SystemImpl::set_param_custom(
+    const std::string& name, const std::string& value, std::optional<uint8_t> maybe_component_id)
 {
-    return param_sender(1, false)->set_param_custom(name, value);
+    return param_sender(maybe_component_id.has_value() ? maybe_component_id.value() : 1, true)
+        ->set_param_custom(name, value);
 }
 
 std::pair<MavlinkParameterSender::Result, std::map<std::string, ParamValue>>
-SystemImpl::get_all_params()
+SystemImpl::get_all_params(std::optional<uint8_t> maybe_component_id, bool extended)
 {
-    return param_sender(1, false)->get_all_params();
+    return param_sender(maybe_component_id ? maybe_component_id.value() : 1, extended)
+        ->get_all_params();
 }
 
 void SystemImpl::set_param_async(
@@ -728,21 +731,25 @@ void SystemImpl::set_param_int_async(
         ->set_param_int_async(name, value, callback, cookie);
 }
 
-std::pair<MavlinkParameterSender::Result, float>
-SystemImpl::get_param_float(const std::string& name)
+std::pair<MavlinkParameterSender::Result, float> SystemImpl::get_param_float(
+    const std::string& name, std::optional<uint8_t> maybe_component_id, bool extended)
 {
-    return param_sender(1, false)->get_param_float(name);
+    return param_sender(maybe_component_id ? maybe_component_id.value() : 1, extended)
+        ->get_param_float(name);
 }
 
-std::pair<MavlinkParameterSender::Result, int> SystemImpl::get_param_int(const std::string& name)
+std::pair<MavlinkParameterSender::Result, int> SystemImpl::get_param_int(
+    const std::string& name, std::optional<uint8_t> maybe_component_id, bool extended)
 {
-    return param_sender(1, false)->get_param_int(name);
+    return param_sender(maybe_component_id ? maybe_component_id.value() : 1, extended)
+        ->get_param_int(name);
 }
 
 std::pair<MavlinkParameterSender::Result, std::string>
-SystemImpl::get_param_custom(const std::string& name)
+SystemImpl::get_param_custom(const std::string& name, std::optional<uint8_t> maybe_component_id)
 {
-    return param_sender(1, false)->get_param_custom(name);
+    return param_sender(maybe_component_id ? maybe_component_id.value() : 1, true)
+        ->get_param_custom(name);
 }
 
 void SystemImpl::get_param_async(
@@ -787,7 +794,9 @@ void SystemImpl::get_param_custom_async(
 
 void SystemImpl::cancel_all_param(const void* cookie)
 {
-    param_sender(1, false)->cancel_all_param(cookie);
+    UNUSED(cookie);
+    // FIXME: this currently crashes on destruction
+    // param_sender(1, false)->cancel_all_param(cookie);
 }
 
 MavlinkCommandSender::Result
