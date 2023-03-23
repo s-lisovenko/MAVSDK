@@ -636,9 +636,9 @@ Action::Result ActionImpl::set_takeoff_altitude_px4(float relative_altitude_m)
 {
     _takeoff_altitude = relative_altitude_m;
 
-    const MavlinkParameterSender::Result result =
+    const MavlinkParameterClient::Result result =
         _parent->set_param_float(TAKEOFF_ALT_PARAM, relative_altitude_m);
-    return (result == MavlinkParameterSender::Result::Success) ? Action::Result::Success :
+    return (result == MavlinkParameterClient::Result::Success) ? Action::Result::Success :
                                                                  Action::Result::ParameterError;
 }
 
@@ -662,7 +662,7 @@ std::pair<Action::Result, float> ActionImpl::get_takeoff_altitude() const
     } else {
         auto result = _parent->get_param_float(TAKEOFF_ALT_PARAM);
         return std::make_pair<>(
-            (result.first == MavlinkParameterSender::Result::Success) ?
+            (result.first == MavlinkParameterClient::Result::Success) ?
                 Action::Result::Success :
                 Action::Result::ParameterError,
             result.second);
@@ -677,9 +677,9 @@ void ActionImpl::set_maximum_speed_async(
 
 Action::Result ActionImpl::set_maximum_speed(float speed_m_s) const
 {
-    const MavlinkParameterSender::Result result =
+    const MavlinkParameterClient::Result result =
         _parent->set_param_float(MAX_SPEED_PARAM, speed_m_s);
-    return (result == MavlinkParameterSender::Result::Success) ? Action::Result::Success :
+    return (result == MavlinkParameterClient::Result::Success) ? Action::Result::Success :
                                                                  Action::Result::ParameterError;
 }
 
@@ -693,7 +693,7 @@ std::pair<Action::Result, float> ActionImpl::get_maximum_speed() const
 {
     auto result = _parent->get_param_float(MAX_SPEED_PARAM);
     return std::make_pair<>(
-        (result.first == MavlinkParameterSender::Result::Success) ? Action::Result::Success :
+        (result.first == MavlinkParameterClient::Result::Success) ? Action::Result::Success :
                                                                     Action::Result::ParameterError,
         result.second);
 }
@@ -706,9 +706,9 @@ void ActionImpl::set_return_to_launch_altitude_async(
 
 Action::Result ActionImpl::set_return_to_launch_altitude(const float relative_altitude_m) const
 {
-    const MavlinkParameterSender::Result result =
+    const MavlinkParameterClient::Result result =
         _parent->set_param_float(RTL_RETURN_ALTITUDE_PARAM, relative_altitude_m);
-    return (result == MavlinkParameterSender::Result::Success) ? Action::Result::Success :
+    return (result == MavlinkParameterClient::Result::Success) ? Action::Result::Success :
                                                                  Action::Result::ParameterError;
 }
 
@@ -723,7 +723,7 @@ std::pair<Action::Result, float> ActionImpl::get_return_to_launch_altitude() con
 {
     auto result = _parent->get_param_float(RTL_RETURN_ALTITUDE_PARAM);
     return std::make_pair<>(
-        (result.first == MavlinkParameterSender::Result::Success) ? Action::Result::Success :
+        (result.first == MavlinkParameterClient::Result::Success) ? Action::Result::Success :
                                                                     Action::Result::ParameterError,
         result.second);
 }

@@ -26,21 +26,21 @@ class Sender;
 class MavlinkMessageHandler;
 class TimeoutHandler;
 
-class MavlinkParameterSender {
+class MavlinkParameterClient {
 public:
-    MavlinkParameterSender() = delete;
-    explicit MavlinkParameterSender(
+    MavlinkParameterClient() = delete;
+    explicit MavlinkParameterClient(
         Sender& parent,
         MavlinkMessageHandler& message_handler,
         TimeoutHandler& timeout_handler,
         TimeoutSCallback timeout_s_callback,
         uint8_t target_component_id = MAV_COMP_ID_AUTOPILOT1,
         bool use_extended_protocol = false);
-    ~MavlinkParameterSender();
+    ~MavlinkParameterClient();
 
     // Non-copyable
-    MavlinkParameterSender(const MavlinkParameterSender&) = delete;
-    const MavlinkParameterSender& operator=(const MavlinkParameterSender&) = delete;
+    MavlinkParameterClient(const MavlinkParameterClient&) = delete;
+    const MavlinkParameterClient& operator=(const MavlinkParameterClient&) = delete;
 
     enum class Result {
         Success,

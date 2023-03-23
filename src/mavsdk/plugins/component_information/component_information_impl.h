@@ -35,7 +35,7 @@ private:
     void parse_parameter_file(const std::string& path);
 
     void get_float_param_result(
-        const std::string& name, MavlinkParameterSender::Result result, float value);
+        const std::string& name, MavlinkParameterClient::Result result, float value);
 
     void param_update(const std::string& name, float new_value);
 

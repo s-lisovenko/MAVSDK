@@ -27,8 +27,8 @@ void FailureImpl::enable()
 
     _parent->get_param_int_async(
         param_name,
-        [this](MavlinkParameterSender::Result result, int32_t value) {
-            if (result == MavlinkParameterSender::Result::Success) {
+        [this](MavlinkParameterClient::Result result, int32_t value) {
+            if (result == MavlinkParameterClient::Result::Success) {
                 if (value == 1) {
                     _enabled = EnabledState::Enabled;
                 } else if (value == 0) {
@@ -42,7 +42,7 @@ void FailureImpl::enable()
         },
         this);
 
-    _parent->mavlink_parameter_sender(MAV_COMP_ID_AUTOPILOT1, false)
+    _parent->mavlink_parameter_client(MAV_COMP_ID_AUTOPILOT1, false)
         .subscribe_param_int_changed(
             param_name,
             [this](int value) {

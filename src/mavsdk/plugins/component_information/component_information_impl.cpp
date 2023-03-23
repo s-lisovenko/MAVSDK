@@ -196,12 +196,12 @@ void ComponentInformationImpl::parse_parameter_file(const std::string& path)
 
             _parent->get_param_float_async(
                 name,
-                [this, name](MavlinkParameterSender::Result result, float value) {
+                [this, name](MavlinkParameterClient::Result result, float value) {
                     get_float_param_result(name, result, value);
                 },
                 this);
 
-            _parent->mavlink_parameter_sender(MAV_COMP_ID_ALL, false)
+            _parent->mavlink_parameter_client(MAV_COMP_ID_ALL, false)
                 .subscribe_param_float_changed(
                     name, [this, name](float value) { param_update(name, value); }, this);
 
@@ -212,9 +212,9 @@ void ComponentInformationImpl::parse_parameter_file(const std::string& path)
 }
 
 void ComponentInformationImpl::get_float_param_result(
-    const std::string& name, MavlinkParameterSender::Result result, float value)
+    const std::string& name, MavlinkParameterClient::Result result, float value)
 {
-    if (result != MavlinkParameterSender::Result::Success) {
+    if (result != MavlinkParameterClient::Result::Success) {
         LogWarn() << "Getting float param result: " << static_cast<int>(result);
         return;
     }
