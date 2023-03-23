@@ -34,11 +34,11 @@ namespace mavsdk {
  * talking to a non-extended client, param_index and param_count are different
  * compared to talking to a client who doesn't speak extended.
  */
-class MavlinkParameterReceiver {
+class MavlinkParameterServer {
 public:
-    MavlinkParameterReceiver() = delete;
-    explicit MavlinkParameterReceiver(Sender& parent, MavlinkMessageHandler& message_handler);
-    ~MavlinkParameterReceiver();
+    MavlinkParameterServer() = delete;
+    explicit MavlinkParameterServer(Sender& parent, MavlinkMessageHandler& message_handler);
+    ~MavlinkParameterServer();
 
     enum class Result {
         Success,
@@ -97,8 +97,8 @@ public:
     friend std::ostream& operator<<(std::ostream&, const Result&);
 
     // Non-copyable
-    MavlinkParameterReceiver(const MavlinkParameterReceiver&) = delete;
-    const MavlinkParameterReceiver& operator=(const MavlinkParameterReceiver&) = delete;
+    MavlinkParameterServer(const MavlinkParameterServer&) = delete;
+    const MavlinkParameterServer& operator=(const MavlinkParameterServer&) = delete;
 
 private:
     void process_param_set_internally(

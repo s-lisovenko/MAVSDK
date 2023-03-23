@@ -21,9 +21,9 @@ void ParamServerImpl::deinit() {}
 std::pair<ParamServer::Result, int32_t> ParamServerImpl::retrieve_param_int(std::string name) const
 {
     auto result =
-        _server_component_impl->mavlink_parameter_receiver().retrieve_server_param_int(name);
+        _server_component_impl->mavlink_parameter_server().retrieve_server_param_int(name);
 
-    if (result.first == MavlinkParameterReceiver::Result::Success) {
+    if (result.first == MavlinkParameterServer::Result::Success) {
         return {ParamServer::Result::Success, result.second};
     } else {
         return {ParamServer::Result::NotFound, -1};
@@ -35,16 +35,16 @@ ParamServer::Result ParamServerImpl::provide_param_int(std::string name, int32_t
     if (name.size() > 16) {
         return ParamServer::Result::ParamNameTooLong;
     }
-    _server_component_impl->mavlink_parameter_receiver().provide_server_param_int(name, value);
+    _server_component_impl->mavlink_parameter_server().provide_server_param_int(name, value);
     return ParamServer::Result::Success;
 }
 
 std::pair<ParamServer::Result, float> ParamServerImpl::retrieve_param_float(std::string name) const
 {
     const auto result =
-        _server_component_impl->mavlink_parameter_receiver().retrieve_server_param_float(name);
+        _server_component_impl->mavlink_parameter_server().retrieve_server_param_float(name);
 
-    if (result.first == MavlinkParameterReceiver::Result::Success) {
+    if (result.first == MavlinkParameterServer::Result::Success) {
         return {ParamServer::Result::Success, result.second};
     } else {
         return {ParamServer::Result::NotFound, NAN};
@@ -56,7 +56,7 @@ ParamServer::Result ParamServerImpl::provide_param_float(std::string name, float
     if (name.size() > 16) {
         return ParamServer::Result::ParamNameTooLong;
     }
-    _server_component_impl->mavlink_parameter_receiver().provide_server_param_float(name, value);
+    _server_component_impl->mavlink_parameter_server().provide_server_param_float(name, value);
     return ParamServer::Result::Success;
 }
 
@@ -64,9 +64,9 @@ std::pair<ParamServer::Result, std::string>
 ParamServerImpl::retrieve_param_custom(std::string name) const
 {
     const auto result =
-        _server_component_impl->mavlink_parameter_receiver().retrieve_server_param_custom(name);
+        _server_component_impl->mavlink_parameter_server().retrieve_server_param_custom(name);
 
-    if (result.first == MavlinkParameterReceiver::Result::Success) {
+    if (result.first == MavlinkParameterServer::Result::Success) {
         return {ParamServer::Result::Success, result.second};
     } else {
         return {ParamServer::Result::NotFound, {}};
@@ -79,13 +79,13 @@ ParamServerImpl::provide_param_custom(std::string name, const std::string& value
     if (name.size() > 16) {
         return ParamServer::Result::ParamNameTooLong;
     }
-    _server_component_impl->mavlink_parameter_receiver().provide_server_param_custom(name, value);
+    _server_component_impl->mavlink_parameter_server().provide_server_param_custom(name, value);
     return ParamServer::Result::Success;
 }
 
 ParamServer::AllParams ParamServerImpl::retrieve_all_params() const
 {
-    auto tmp = _server_component_impl->mavlink_parameter_receiver().retrieve_all_server_params();
+    auto tmp = _server_component_impl->mavlink_parameter_server().retrieve_all_server_params();
 
     ParamServer::AllParams res{};
 
@@ -106,19 +106,19 @@ ParamServer::AllParams ParamServerImpl::retrieve_all_params() const
     return res;
 }
 
-ParamServer::Result ParamServerImpl::result_from_mavlink_parameter_receiver_result(
-    MavlinkParameterReceiver::Result result)
+ParamServer::Result
+ParamServerImpl::result_from_mavlink_parameter_server_result(MavlinkParameterServer::Result result)
 {
     switch (result) {
-        case MavlinkParameterReceiver::Result::Success:
+        case MavlinkParameterServer::Result::Success:
             return ParamServer::Result::Success;
-        case MavlinkParameterReceiver::Result::NotFound:
+        case MavlinkParameterServer::Result::NotFound:
             return ParamServer::Result::NotFound;
-        case MavlinkParameterReceiver::Result::ParamNameTooLong:
+        case MavlinkParameterServer::Result::ParamNameTooLong:
             return ParamServer::Result::ParamNameTooLong;
-        case MavlinkParameterReceiver::Result::WrongType:
+        case MavlinkParameterServer::Result::WrongType:
             return ParamServer::Result::WrongType;
-        case MavlinkParameterReceiver::Result::ParamValueTooLong:
+        case MavlinkParameterServer::Result::ParamValueTooLong:
             return ParamServer::Result::ParamValueTooLong;
         default:
             LogErr() << "Unknown param error";
