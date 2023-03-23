@@ -13,7 +13,7 @@
 namespace mavsdk {
 
 /**
- * This is a c++ helper for a mavlink extended or non-extended param value.
+ * This is a helper for a MAVLink extended or non-extended param value.
  */
 class ParamValue {
 public:
@@ -48,10 +48,8 @@ public:
 
     [[nodiscard]] std::string get_string() const;
 
-    // Note: the implementation here needs to stay in the header,unfortunately.
     template<typename T> [[nodiscard]] constexpr bool is() const
     {
-        // is this better ? std::holds_alternative<T>(_value)
         return (std::get_if<T>(&_value) != nullptr);
     }
 

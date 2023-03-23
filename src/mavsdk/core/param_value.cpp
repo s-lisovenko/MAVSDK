@@ -641,7 +641,7 @@ std::ostream& operator<<(std::ostream& str, const ParamValue& obj)
     } else if (std::get_if<std::string>(&_value)) {
         return "custom";
     }
-    // FIXME: Added to fix CI error (control reading end of non-void function)
+    // Added to fix CI error (control reading end of non-void function)
     return "unknown";
 }
 

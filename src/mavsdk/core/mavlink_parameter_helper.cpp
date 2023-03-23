@@ -5,7 +5,8 @@ namespace mavsdk {
 
 std::string extract_safe_param_id(const char* param_id)
 {
-    // The param_id field of the MAVLink struct has length 16 and can not be null terminated.
+    // The param_id field of the MAVLink struct has length 16 and can be not
+    // not null terminated.
     // Therefore, we make a 0 terminated copy first.
     char param_id_long_enough[PARAM_ID_LEN + 1] = {};
     std::memcpy(param_id_long_enough, param_id, PARAM_ID_LEN);

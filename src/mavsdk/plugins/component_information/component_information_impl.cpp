@@ -201,8 +201,9 @@ void ComponentInformationImpl::parse_parameter_file(const std::string& path)
                 },
                 this);
 
-            _parent->subscribe_param_float(
-                name, [this, name](float value) { param_update(name, value); }, this);
+            _parent->mavlink_parameter_sender(MAV_COMP_ID_ALL, false)
+                .subscribe_param_float_changed(
+                    name, [this, name](float value) { param_update(name, value); }, this);
 
         } else {
             LogWarn() << "Ignoring type " << param["type"].asString() << " for now.";

@@ -67,6 +67,7 @@ TEST(MavlinkParameterCache, AddingAndUpdating)
         MavlinkParameterCache::UpdateExistingParamResult::WrongType,
         cache.update_existing_param(custom_value1.id, int_value1.value));
 }
+
 TEST(MavlinkParameterCache, MissingIndicesSorted)
 {
     MavlinkParameterCache cache;
@@ -90,6 +91,7 @@ TEST(MavlinkParameterCache, MissingIndicesSorted)
     cache.add_new_param("PARAM2", value);
     EXPECT_EQ(cache.next_missing_index(6), 3);
 }
+
 TEST(MavlinkParameterCache, MissingIndicesNotSorted)
 {
     MavlinkParameterCache cache;

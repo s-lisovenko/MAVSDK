@@ -22,7 +22,7 @@ public:
         AlreadyExists,
         TooManyParams,
     };
-    [[nodiscard]] AddNewParamResult
+    AddNewParamResult
     add_new_param(const std::string& param_id, ParamValue value, int16_t index = -1);
 
     enum class UpdateExistingParamResult {
@@ -30,8 +30,7 @@ public:
         MissingParam,
         WrongType,
     };
-    [[nodiscard]] UpdateExistingParamResult
-    update_existing_param(const std::string& param_id, ParamValue value);
+    UpdateExistingParamResult update_existing_param(const std::string& param_id, ParamValue value);
 
     [[nodiscard]] std::vector<Param> all_parameters(bool including_extended) const;
     [[nodiscard]] std::map<std::string, ParamValue>

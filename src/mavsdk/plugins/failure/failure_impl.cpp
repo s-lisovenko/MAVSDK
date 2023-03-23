@@ -42,18 +42,19 @@ void FailureImpl::enable()
         },
         this);
 
-    _parent->subscribe_param_int(
-        param_name,
-        [this](int value) {
-            if (value == 1) {
-                _enabled = EnabledState::Enabled;
-            } else if (value == 0) {
-                _enabled = EnabledState::Disabled;
-            } else {
-                _enabled = EnabledState::Unknown;
-            }
-        },
-        this);
+    _parent->mavlink_parameter_sender(MAV_COMP_ID_AUTOPILOT1, false)
+        .subscribe_param_int_changed(
+            param_name,
+            [this](int value) {
+                if (value == 1) {
+                    _enabled = EnabledState::Enabled;
+                } else if (value == 0) {
+                    _enabled = EnabledState::Disabled;
+                } else {
+                    _enabled = EnabledState::Unknown;
+                }
+            },
+            this);
 }
 
 void FailureImpl::disable()

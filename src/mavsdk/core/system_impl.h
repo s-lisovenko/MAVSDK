@@ -9,6 +9,7 @@
 #include "mavlink_ftp.h"
 #include "mavlink_message_handler.h"
 #include "mavlink_mission_transfer.h"
+#include "mavlink_parameter_subscription.h"
 #include "mavlink_request_message_handler.h"
 #include "mavlink_statustext_handler.h"
 #include "request_message.h"
@@ -238,20 +239,23 @@ public:
         std::optional<uint8_t> maybe_component_id = {},
         bool extended = false);
 
-    void subscribe_param_float(
-        const std::string& name,
-        const MavlinkParameterSender::ParamFloatChangedCallback& callback,
-        const void* cookie);
+    // using SubscribeParamFloatCallback = const std::function<void(float)>;
+    // void subscribe_param_float(
+    //    const std::string& name,
+    //    const SubscribeParamFloatCallback& callback,
+    //    const void* cookie);
 
-    void subscribe_param_int(
-        const std::string& name,
-        const MavlinkParameterSender::ParamIntChangedCallback& callback,
-        const void* cookie);
+    // using SubscribeParamIntCallback = const std::function<void(int32_t)>;
+    // void subscribe_param_int(
+    //    const std::string& name,
+    //    const SubscribeParamIntCallback& callback,
+    //    const void* cookie);
 
-    void subscribe_param_custom(
-        const std::string& name,
-        const MavlinkParameterSender::ParamCustomChangedCallback& callback,
-        const void* cookie);
+    // using SubscribeParamCustomCallback = const std::function<void(std::string)>;
+    // void subscribe_param_custom(
+    //    const std::string& name,
+    //    const SubscribeParamCustomCallback& callback,
+    //    const void* cookie);
 
     void cancel_all_param(const void* cookie);
 
@@ -284,6 +288,8 @@ public:
     MavlinkFtp& mavlink_ftp() { return _mavlink_ftp; };
 
     RequestMessage& request_message() { return _request_message; };
+
+    MavlinkParameterSender& mavlink_parameter_sender(uint8_t component_id, bool extended);
 
     // Non-copyable
     SystemImpl(const SystemImpl&) = delete;
@@ -345,8 +351,6 @@ private:
     AutopilotTime _autopilot_time{};
 
     MavlinkStatustextHandler _statustext_handler{};
-
-    MavlinkParameterSender* param_sender(uint8_t component_id, bool extended);
 
     struct StatustextCallback {
         std::function<void(const MavlinkStatustextHandler::Statustext&)> callback;

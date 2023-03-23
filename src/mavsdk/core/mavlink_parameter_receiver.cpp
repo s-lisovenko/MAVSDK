@@ -1,25 +1,20 @@
 #include "mavlink_parameter_receiver.h"
 #include "mavlink_parameter_helper.h"
 #include "plugin_base.h"
+#include <variant>
 #include <cassert>
 
 namespace mavsdk {
 
 MavlinkParameterReceiver::MavlinkParameterReceiver(
-    Sender& sender,
-    MavlinkMessageHandler& message_handler,
-    std::optional<std::map<std::string, ParamValue>> optional_param_values) :
+    Sender& sender, MavlinkMessageHandler& message_handler) :
     _sender(sender),
     _message_handler(message_handler)
 {
-    // Populate the parameter set before the first communication, if provided by the user.
-    if (optional_param_values.has_value()) {
-        const auto& param_values = optional_param_values.value();
-        for (const auto& [key, value] : param_values) {
-            const auto result = provide_server_param(key, value);
-            if (result != Result::Success) {
-                LogDebug() << "Cannot add parameter:" << key << ":" << value << " " << result;
-            }
+    if (const char* env_p = std::getenv("MAVSDK_PARAMETER_DEBUGGING")) {
+        if (std::string(env_p) == "1") {
+            LogDebug() << "Parameter debugging is on.";
+            _debugging = true;
         }
     }
 
@@ -74,7 +69,7 @@ MavlinkParameterReceiver::Result MavlinkParameterReceiver::provide_server_param(
         }
     }
     std::lock_guard<std::mutex> lock(_all_params_mutex);
-    // first we try to add it as a new parameter
+    // First we try to add it as a new parameter.
     switch (_param_cache.add_new_param(name, param_value)) {
         case MavlinkParameterCache::AddNewParamResult::Ok:
             return Result::Success;
@@ -87,7 +82,7 @@ MavlinkParameterReceiver::Result MavlinkParameterReceiver::provide_server_param(
             assert(false);
     }
 
-    // then, to not change the public api behaviour, try updating its value.
+    // Then, try updating its value.
     switch (_param_cache.update_existing_param(name, param_value)) {
         case MavlinkParameterCache::UpdateExistingParamResult::Ok:
             return Result::Success;
@@ -125,7 +120,7 @@ MavlinkParameterReceiver::Result MavlinkParameterReceiver::provide_server_param_
     return provide_server_param(name, param_value);
 }
 
-std::map<std::string, ParamValue> MavlinkParameterReceiver::retrieve_all_server_params()
+std::map<std::string, ParamValue> MavlinkParameterReceiver::retrieve_all_server_params() const
 {
     std::lock_guard<std::mutex> lock(_all_params_mutex);
     std::map<std::string, ParamValue> map_copy;
@@ -137,7 +132,7 @@ std::map<std::string, ParamValue> MavlinkParameterReceiver::retrieve_all_server_
 
 template<class T>
 std::pair<MavlinkParameterReceiver::Result, T>
-MavlinkParameterReceiver::retrieve_server_param(const std::string& name)
+MavlinkParameterReceiver::retrieve_server_param(const std::string& name) const
 {
     std::lock_guard<std::mutex> lock(_all_params_mutex);
     const auto param_opt = _param_cache.param_by_id(name, true);
@@ -153,19 +148,19 @@ MavlinkParameterReceiver::retrieve_server_param(const std::string& name)
 }
 
 std::pair<MavlinkParameterReceiver::Result, float>
-MavlinkParameterReceiver::retrieve_server_param_float(const std::string& name)
+MavlinkParameterReceiver::retrieve_server_param_float(const std::string& name) const
 {
     return retrieve_server_param<float>(name);
 }
 
 std::pair<MavlinkParameterReceiver::Result, std::string>
-MavlinkParameterReceiver::retrieve_server_param_custom(const std::string& name)
+MavlinkParameterReceiver::retrieve_server_param_custom(const std::string& name) const
 {
     return retrieve_server_param<std::string>(name);
 }
 
 std::pair<MavlinkParameterReceiver::Result, int32_t>
-MavlinkParameterReceiver::retrieve_server_param_int(const std::string& name)
+MavlinkParameterReceiver::retrieve_server_param_int(const std::string& name) const
 {
     return retrieve_server_param<int32_t>(name);
 }
@@ -173,12 +168,20 @@ MavlinkParameterReceiver::retrieve_server_param_int(const std::string& name)
 void MavlinkParameterReceiver::process_param_set_internally(
     const std::string& param_id, const ParamValue& value_to_set, bool extended)
 {
-    // TODO: add debugging env
-    LogDebug() << "Param set request " << (extended ? "extended" : "") << ": " << param_id
-               << " with " << value_to_set;
+    if (_debugging) {
+        LogDebug() << "Param set request " << (extended ? "extended" : "") << ": " << param_id
+                   << " with " << value_to_set;
+    }
+
     std::lock_guard<std::mutex> lock(_all_params_mutex);
     // for checking if the update actually changed the value
-    const auto opt_before_update = _param_cache.param_by_id(param_id, extended);
+    const auto maybe_param_before_update = _param_cache.param_by_id(param_id, extended);
+    if (!maybe_param_before_update) {
+        // This shouldn't happen.
+        LogErr() << "Param doesn't exist, giving up.";
+        return;
+    }
+    const auto& param_before_update = maybe_param_before_update.value();
     const auto result = _param_cache.update_existing_param(param_id, value_to_set);
     const auto param_count = _param_cache.count(extended);
 
@@ -216,18 +219,21 @@ void MavlinkParameterReceiver::process_param_set_internally(
             const auto updated_parameter = _param_cache.param_by_id(param_id, extended).value();
             // The param set doesn't differentiate between an update that actually changed the value
             // e.g. 0 to 1 and an update that had no effect e.g. 0 to 0.
-            if (opt_before_update.has_value() &&
-                opt_before_update.value().value == updated_parameter.value) {
-                LogDebug() << "Update had no effect: " << updated_parameter.value;
+            if (param_before_update.value == updated_parameter.value) {
+                LogDebug() << "Param " << param_id
+                           << " not changed, still: " << updated_parameter.value;
             } else {
-                LogDebug() << "Updated param to :" << updated_parameter.value;
-                find_and_call_subscriptions_value_changed(
+                LogDebug() << "Updated " << param_id << " from " << param_before_update.value
+                           << " to :" << updated_parameter.value;
+
+                _param_subscriptions.find_and_call_subscriptions_value_changed(
                     updated_parameter.id, updated_parameter.value);
             }
             if (extended) {
                 auto new_work = std::make_shared<WorkItem>(
                     updated_parameter.id, updated_parameter.value, WorkItemAck{PARAM_ACK_ACCEPTED});
                 _work_queue.push_back(new_work);
+
             } else {
                 auto new_work = std::make_shared<WorkItem>(
                     updated_parameter.id,
@@ -241,47 +247,52 @@ void MavlinkParameterReceiver::process_param_set_internally(
 
 void MavlinkParameterReceiver::process_param_set(const mavlink_message_t& message)
 {
-    mavlink_param_set_t set_request{};
+    if (_debugging) {
+        LogDebug() << "process param_set";
+    }
+    mavlink_param_set_t set_request;
     mavlink_msg_param_set_decode(&message, &set_request);
     if (!target_matches(set_request.target_system, set_request.target_component, false)) {
-        log_target_mismatch(set_request.target_system, set_request.target_component);
         return;
     }
     const std::string safe_param_id = extract_safe_param_id(set_request.param_id);
 
     if (safe_param_id.empty()) {
-        LogWarn() << "Got ill-formed param_set message (param_id empty)";
+        LogWarn() << "Got param_set request with empty param_id";
         return;
     }
 
     ParamValue value_to_set;
     if (!value_to_set.set_from_mavlink_param_set_bytewise(set_request)) {
         // This should never happen, the type enum in the message is unknown.
-        LogWarn() << "Invalid Param Set Request: " << safe_param_id;
+        LogWarn() << "Got param_set request for " << safe_param_id << " with unknown type";
         return;
     }
+
     process_param_set_internally(safe_param_id, value_to_set, false);
 }
 
 void MavlinkParameterReceiver::process_param_ext_set(const mavlink_message_t& message)
 {
-    mavlink_param_ext_set_t set_request{};
+    if (_debugging) {
+        LogDebug() << "process param_ext_set";
+    }
+    mavlink_param_ext_set_t set_request;
     mavlink_msg_param_ext_set_decode(&message, &set_request);
     if (!target_matches(set_request.target_system, set_request.target_component, false)) {
-        log_target_mismatch(set_request.target_system, set_request.target_component);
         return;
     }
     const std::string safe_param_id = extract_safe_param_id(set_request.param_id);
 
     if (safe_param_id.empty()) {
-        LogWarn() << "Got ill-formed param_ext_set message (param_id empty)";
+        LogWarn() << "Got param_ext_set request with empty param_id";
         return;
     }
 
     ParamValue value_to_set;
     if (!value_to_set.set_from_mavlink_param_ext_set(set_request)) {
         // This should never happen, the type enum in the message is unknown.
-        LogWarn() << "Invalid Param Set ext Request: " << safe_param_id;
+        LogWarn() << "Got param_ext_set request for " << safe_param_id << " with unknown type";
         return;
     }
     process_param_set_internally(safe_param_id, value_to_set, true);
@@ -289,11 +300,12 @@ void MavlinkParameterReceiver::process_param_ext_set(const mavlink_message_t& me
 
 void MavlinkParameterReceiver::process_param_request_read(const mavlink_message_t& message)
 {
-    LogDebug() << "process param_request_read";
-    mavlink_param_request_read_t read_request{};
+    if (_debugging) {
+        LogDebug() << "process param_request_read";
+    }
+    mavlink_param_request_read_t read_request;
     mavlink_msg_param_request_read_decode(&message, &read_request);
     if (!target_matches(read_request.target_system, read_request.target_component, true)) {
-        log_target_mismatch(read_request.target_system, read_request.target_component);
         return;
     }
 
@@ -303,20 +315,19 @@ void MavlinkParameterReceiver::process_param_request_read(const mavlink_message_
     std::visit(
         overloaded{
             [&](std::monostate) { LogWarn() << "Ill-formed param_request_read message"; },
-            [&](std::uint16_t index) {
-                internal_process_param_request_read_by_index(index, false);
-            },
+            [&](uint16_t index) { internal_process_param_request_read_by_index(index, false); },
             [&](const std::string& id) { internal_process_param_request_read_by_id(id, false); }},
         param_id_or_index);
 }
 
 void MavlinkParameterReceiver::process_param_ext_request_read(const mavlink_message_t& message)
 {
-    LogDebug() << "process param_ext_request_read";
-    mavlink_param_ext_request_read_t read_request{};
+    if (_debugging) {
+        LogDebug() << "process param_ext_request_read";
+    }
+    mavlink_param_ext_request_read_t read_request;
     mavlink_msg_param_ext_request_read_decode(&message, &read_request);
     if (!target_matches(read_request.target_system, read_request.target_component, true)) {
-        log_target_mismatch(read_request.target_system, read_request.target_component);
         return;
     }
     const auto param_id_or_index =
@@ -325,9 +336,7 @@ void MavlinkParameterReceiver::process_param_ext_request_read(const mavlink_mess
     std::visit(
         overloaded{
             [&](std::monostate) { LogWarn() << "Ill-formed param_request_read message"; },
-            [&](std::uint16_t index) {
-                internal_process_param_request_read_by_index(index, false);
-            },
+            [&](uint16_t index) { internal_process_param_request_read_by_index(index, true); },
             [&](const std::string& id) { internal_process_param_request_read_by_id(id, true); }},
         param_id_or_index);
 }
@@ -345,14 +354,18 @@ void MavlinkParameterReceiver::internal_process_param_request_read_by_id(
     }
     const auto& param = param_opt.value();
     const auto param_count = _param_cache.count(extended);
-    assert(param.index < param_count);
+    if (param.index >= param_count) {
+        LogErr() << "Invalid param index";
+        return;
+    }
+
     auto new_work = std::make_shared<WorkItem>(
         param.id, param.value, WorkItemValue{param.index, param_count, extended});
     _work_queue.push_back(new_work);
 }
 
 void MavlinkParameterReceiver::internal_process_param_request_read_by_index(
-    std::uint16_t index, bool extended)
+    uint16_t index, bool extended)
 {
     std::lock_guard<std::mutex> lock(_all_params_mutex);
     const auto param_opt = _param_cache.param_by_index(index, extended);
@@ -365,7 +378,10 @@ void MavlinkParameterReceiver::internal_process_param_request_read_by_index(
     const auto& param = param_opt.value();
     const auto param_count = _param_cache.count(extended);
 
-    assert(param.index < param_count);
+    if (param.index >= param_count) {
+        LogErr() << "Invalid param index";
+        return;
+    }
     auto new_work = std::make_shared<WorkItem>(
         param.id, param.value, WorkItemValue{param.index, param_count, extended});
     _work_queue.push_back(new_work);
@@ -376,7 +392,6 @@ void MavlinkParameterReceiver::process_param_request_list(const mavlink_message_
     mavlink_param_request_list_t list_request{};
     mavlink_msg_param_request_list_decode(&message, &list_request);
     if (!target_matches(list_request.target_system, list_request.target_component, true)) {
-        log_target_mismatch(list_request.target_system, list_request.target_component);
         return;
     }
     broadcast_all_parameters(false);
@@ -387,7 +402,6 @@ void MavlinkParameterReceiver::process_param_ext_request_list(const mavlink_mess
     mavlink_param_ext_request_list_t ext_list_request{};
     mavlink_msg_param_ext_request_list_decode(&message, &ext_list_request);
     if (!target_matches(ext_list_request.target_system, ext_list_request.target_component, true)) {
-        log_target_mismatch(ext_list_request.target_system, ext_list_request.target_component);
         return;
     }
     broadcast_all_parameters(true);
@@ -407,6 +421,49 @@ void MavlinkParameterReceiver::broadcast_all_parameters(const bool extended)
             WorkItemValue{parameter.index, static_cast<uint16_t>(all_params.size()), extended});
         _work_queue.push_back(new_work);
     }
+}
+
+void MavlinkParameterReceiver::subscribe_param_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamChangedCallbacks& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterReceiver::subscribe_param_float_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamFloatChangedCallback& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterReceiver::subscribe_param_int_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamIntChangedCallback& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterReceiver::subscribe_param_custom_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamCustomChangedCallback& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterReceiver::unsubscribe_param_changed(
+    const std::string& name, const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.unsubscribe_param_changed(name, cookie);
 }
 
 void MavlinkParameterReceiver::do_work()
@@ -497,26 +554,30 @@ std::ostream& operator<<(std::ostream& str, const MavlinkParameterReceiver::Resu
 }
 
 bool MavlinkParameterReceiver::target_matches(
-    const uint16_t target_sys_id, const uint16_t target_comp_id, bool is_request)
+    const uint16_t target_sys_id, const uint16_t target_comp_id, bool is_request) const
 {
-    if (target_sys_id != _sender.get_own_system_id()) {
-        return false;
+    // See: https://mavlink.io/en/services/parameter.html#multi-system-and-multi-component-support
+    // returns true if the message should be processed by this server, false otherwise.
+
+    const bool sys_id_ok =
+        target_sys_id == _sender.get_own_system_id() || (target_sys_id == 0 && is_request);
+
+    const bool comp_id_ok = target_comp_id == _sender.get_own_component_id() ||
+                            (target_comp_id == MAV_COMP_ID_ALL && is_request);
+
+    const bool result = sys_id_ok && comp_id_ok;
+
+    if (!result) {
+        LogDebug() << "Ignoring message - wrong target sysid/compid."
+                   << " Got:" << (int)target_sys_id << ":" << (int)target_comp_id
+                   << ", wanted:" << (int)_sender.get_own_system_id() << ":"
+                   << (int)_sender.get_own_component_id();
     }
-    if (is_request) {
-        return target_comp_id == _sender.get_own_component_id() ||
-               target_comp_id == MAV_COMP_ID_ALL;
-    }
-    return target_comp_id == _sender.get_own_component_id();
+
+    return result;
 }
 
-void MavlinkParameterReceiver::log_target_mismatch(uint16_t target_sys_id, uint16_t target_comp_id)
-{
-    LogDebug() << "Ignoring message - wrong target id. Got:" << (int)target_sys_id << ":"
-               << (int)target_comp_id << " Wanted:" << (int)_sender.get_own_system_id() << ":"
-               << (int)_sender.get_own_component_id();
-}
-
-std::variant<std::monostate, std::string, std::uint16_t>
+std::variant<std::monostate, std::string, uint16_t>
 MavlinkParameterReceiver::extract_request_read_param_identifier(
     int16_t param_index, const char* param_id)
 {
@@ -534,7 +595,7 @@ MavlinkParameterReceiver::extract_request_read_param_identifier(
             LogErr() << "Param_index " << param_index << " is not a valid param index";
             return std::monostate{};
         }
-        return {static_cast<std::uint16_t>(param_index)};
+        return {static_cast<uint16_t>(param_index)};
     }
 }
 

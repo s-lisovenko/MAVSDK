@@ -5,9 +5,9 @@
 #include "timeout_s_callback.h"
 #include "locked_queue.h"
 #include "param_value.h"
-#include "mavlink_parameter_subscription.h"
 #include "mavlink_parameter_cache.h"
 #include "mavlink_parameter_helper.h"
+#include "mavlink_parameter_subscription.h"
 
 #include <array>
 #include <cstddef>
@@ -26,7 +26,7 @@ class Sender;
 class MavlinkMessageHandler;
 class TimeoutHandler;
 
-class MavlinkParameterSender : public MavlinkParameterSubscription {
+class MavlinkParameterSender {
 public:
     MavlinkParameterSender() = delete;
     explicit MavlinkParameterSender(
@@ -143,6 +143,24 @@ public:
 
     void clear_cache();
 
+    void subscribe_param_changed(
+        const std::string& name,
+        const MavlinkParameterSubscription::ParamChangedCallbacks& callback,
+        const void* cookie);
+    void subscribe_param_float_changed(
+        const std::string& name,
+        const MavlinkParameterSubscription::ParamFloatChangedCallback& callback,
+        const void* cookie);
+    void subscribe_param_int_changed(
+        const std::string& name,
+        const MavlinkParameterSubscription::ParamIntChangedCallback& callback,
+        const void* cookie);
+    void subscribe_param_custom_changed(
+        const std::string& name,
+        const MavlinkParameterSubscription::ParamCustomChangedCallback& callback,
+        const void* cookie);
+    void unsubscribe_param_changed(const std::string& name, const void* cookie);
+
     void do_work();
 
     friend std::ostream& operator<<(std::ostream&, const Result&);
@@ -202,6 +220,9 @@ private:
     void* _timeout_cookie = nullptr;
 
     MavlinkParameterCache _param_cache{};
+
+    mutable std::mutex _param_subscriptions_mutex{};
+    MavlinkParameterSubscription _param_subscriptions{};
 
     bool _parameter_debugging = false;
 

@@ -8,12 +8,6 @@
 #include <future>
 #include <utility>
 
-// FIXME:
-//  - go through debug, warnings
-//  - test with drops
-//  - check all unknown results
-//  - use queue for callbacks
-
 namespace mavsdk {
 
 MavlinkParameterSender::MavlinkParameterSender(
@@ -404,6 +398,48 @@ void MavlinkParameterSender::clear_cache()
     _param_cache.clear();
 }
 
+void MavlinkParameterSender::subscribe_param_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamChangedCallbacks& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterSender::subscribe_param_float_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamFloatChangedCallback& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterSender::subscribe_param_int_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamIntChangedCallback& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterSender::subscribe_param_custom_changed(
+    const std::string& name,
+    const MavlinkParameterSubscription::ParamCustomChangedCallback& callback,
+    const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.subscribe_param_changed(name, callback, cookie);
+}
+
+void MavlinkParameterSender::unsubscribe_param_changed(const std::string& name, const void* cookie)
+{
+    std::lock_guard<std::mutex> lock(_param_subscriptions_mutex);
+    _param_subscriptions.unsubscribe_param_changed(name, cookie);
+}
+
 void MavlinkParameterSender::do_work()
 {
     auto work_queue_guard = std::make_unique<LockedQueue<WorkItem>::Guard>(_work_queue);
@@ -600,7 +636,7 @@ void MavlinkParameterSender::process_param_value(const mavlink_message_t& messag
     mavlink_msg_param_value_decode(&message, &param_value);
     const std::string safe_param_id = extract_safe_param_id(param_value.param_id);
     if (safe_param_id.empty()) {
-        LogWarn() << "Got ill-formed param_value message (param_id empty)";
+        LogWarn() << "Param_value with empty param_id";
         return;
     }
 
@@ -611,7 +647,7 @@ void MavlinkParameterSender::process_param_value(const mavlink_message_t& messag
             ParamValue::Conversion::Cast :
             ParamValue::Conversion::Bitwise);
     if (!set_value_success) {
-        LogWarn() << "Got ill-formed param_ext_value message (param_type unknown)";
+        LogWarn() << "param_ext_value with unknown param_type";
         return;
     }
 
@@ -794,7 +830,7 @@ void MavlinkParameterSender::process_param_value(const mavlink_message_t& messag
             }},
         work->work_item_variant);
 
-    // find_and_call_subscriptions_value_changed(safe_param_id, received_value);
+    _param_subscriptions.find_and_call_subscriptions_value_changed(safe_param_id, received_value);
 }
 
 void MavlinkParameterSender::process_param_ext_value(const mavlink_message_t& message)
@@ -803,12 +839,12 @@ void MavlinkParameterSender::process_param_ext_value(const mavlink_message_t& me
     mavlink_msg_param_ext_value_decode(&message, &param_ext_value);
     const auto safe_param_id = extract_safe_param_id(param_ext_value.param_id);
     if (safe_param_id.empty()) {
-        LogWarn() << "Got ill-formed param_ext_value message (param_id empty)";
+        LogWarn() << "param_ext_value message with empty param_id";
         return;
     }
     ParamValue received_value;
     if (!received_value.set_from_mavlink_param_ext_value(param_ext_value)) {
-        LogWarn() << "Got ill-formed param_ext_value message (param_type unknown)";
+        LogWarn() << "param_ext_value with unknown param_type";
         return;
     }
 
@@ -896,8 +932,7 @@ void MavlinkParameterSender::process_param_ext_value(const mavlink_message_t& me
         },
         work->work_item_variant);
 
-    // TODO I think we need to consider more edge cases here
-    // find_and_call_subscriptions_value_changed(safe_param_id, received_value);
+    _param_subscriptions.find_and_call_subscriptions_value_changed(safe_param_id, received_value);
 }
 
 void MavlinkParameterSender::process_param_ext_ack(const mavlink_message_t& message)
