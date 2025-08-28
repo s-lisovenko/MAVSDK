@@ -13,6 +13,7 @@ if(IOS)
     ExternalProject_add(
         mavlink
         GIT_REPOSITORY https://github.com/s-lisovenko/mavlink.git
+        GIT_TAG autopilot
         PREFIX mavlink
         PATCH_COMMAND git checkout .
         COMMAND git apply ${PROJECT_SOURCE_DIR}/mavlink.patch
@@ -23,6 +24,7 @@ else()
     ExternalProject_add(
         mavlink
         GIT_REPOSITORY https://github.com/s-lisovenko/mavlink.git
+        GIT_TAG autopilot
         PREFIX mavlink
         PATCH_COMMAND git checkout . && git apply ${PROJECT_SOURCE_DIR}/mavlink.patch
         CMAKE_ARGS "${CMAKE_ARGS}"
